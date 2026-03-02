@@ -7,9 +7,14 @@
 
 import SwiftData
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct DashboardView: View {
     @Query private var cars: [HotWheel]
+    @Environment(\.modelContext) private var context
+    @State private var isExporting = false
+    @State private var isImporting = false
+    @State private var backupDocument = BackupDocument()
 
     private var totalCars: Int {
         cars.count
@@ -64,6 +69,43 @@ struct DashboardView: View {
                 .padding()
             }
             .navigationTitle("Dashboard")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Button(
+                            "Export Data",
+                            systemImage: "square.and.arrow.up"
+                        ) {
+                            prepareExport()
+                        }
+                        Button(
+                            "Import Data",
+                            systemImage: "square.and.arrow.down"
+                        ) {
+                            isImporting = true
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
+                    }
+                }
+            }
+            .fileExporter(
+                isPresented: $isExporting,
+                document: backupDocument,
+                contentType: .json,
+                defaultFilename: "VeloceBackup"
+            ) { _ in }
+            .fileImporter(
+                isPresented: $isImporting,
+                allowedContentTypes: [.json]
+            ) { result in
+                switch result {
+                case .success(let url):
+                    importData(from: url)
+                case .failure(let error):
+                    print("Error importing: \(error.localizedDescription)")
+                }
+            }
             .overlay {
                 if cars.isEmpty {
                     ContentUnavailableView(
@@ -73,6 +115,77 @@ struct DashboardView: View {
                     )
                 }
             }
+        }
+    }
+
+    // Funciones ahora dentro de DashboardView
+    private func prepareExport() {
+        let dtos = cars.map { car in
+            HotWheelDTO(
+                name: car.name,
+                seriesName: car.series?.name,
+                color: car.color,
+                serialNumberCase: car.serialNumberCase,
+                serialNumberCar: car.serialNumberCar,
+                seriesNumber: car.seriesNumber,
+                yearDesigned: car.yearDesigned,
+                yearReleased: car.yearReleased,
+                yearReceived: car.yearReceived,
+                cost: car.cost,
+                hasCase: car.hasCase,
+                isTreasureHunt: car.isTreasureHunt,
+                notes: car.notes,
+                imageData: car.imageData
+            )
+        }
+        backupDocument = BackupDocument(dtos: dtos)
+        isExporting = true
+    }
+
+    private func importData(from url: URL) {
+        guard url.startAccessingSecurityScopedResource() else { return }
+        defer { url.stopAccessingSecurityScopedResource() }
+
+        guard let data = try? Data(contentsOf: url),
+            let dtos = try? JSONDecoder().decode([HotWheelDTO].self, from: data)
+        else { return }
+
+        let descriptor = FetchDescriptor<HotWheelSeries>()
+        let existingSeries = (try? context.fetch(descriptor)) ?? []
+        var seriesDict = Dictionary(
+            uniqueKeysWithValues: existingSeries.map { ($0.name, $0) }
+        )
+
+        for dto in dtos {
+            var series: HotWheelSeries? = nil
+            if let sName = dto.seriesName {
+                if let existing = seriesDict[sName] {
+                    series = existing
+                } else {
+                    let newSeries = HotWheelSeries(name: sName)
+                    context.insert(newSeries)
+                    seriesDict[sName] = newSeries
+                    series = newSeries
+                }
+            }
+
+            let newCar = HotWheel(
+                name: dto.name,
+                series: series,
+                color: dto.color,
+                serialNumberCase: dto.serialNumberCase,
+                serialNumberCar: dto.serialNumberCar,
+                seriesNumber: dto.seriesNumber,
+                yearDesigned: dto.yearDesigned,
+                yearReleased: dto.yearReleased,
+                yearReceived: dto.yearReceived,
+                cost: dto.cost,
+                hasCase: dto.hasCase,
+                isTreasureHunt: dto.isTreasureHunt,
+                notes: dto.notes,
+                imageData: dto.imageData
+            )
+            context.insert(newCar)
         }
     }
 }
