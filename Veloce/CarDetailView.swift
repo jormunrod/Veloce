@@ -9,9 +9,13 @@ import SwiftData
 import SwiftUI
 
 struct CarDetailView: View {
-    @State private var isShowingEditView = false
 
     let car: HotWheel
+
+    @Environment(\.modelContext) private var context
+    @Environment(\.dismiss) private var dismiss
+    @State private var isShowingDeleteConfirmation = false
+    @State private var isShowingEditView = false
 
     var body: some View {
         ScrollView {
@@ -113,6 +117,15 @@ struct CarDetailView: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
                     }
+                    Button(role: .destructive) {
+                        isShowingDeleteConfirmation = true
+                    } label: {
+                        Label("Delete Car", systemImage: "trash")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .padding(.top, 16)
                 }
                 .padding(.horizontal)
             }
@@ -129,6 +142,17 @@ struct CarDetailView: View {
         }
         .sheet(isPresented: $isShowingEditView) {
             AddCarView(carToEdit: car)
+        }
+        .alert("Delete Car", isPresented: $isShowingDeleteConfirmation) {
+            Button("Cancel", role: .cancel) {}
+            Button("Delete", role: .destructive) {
+                context.delete(car)
+                dismiss()
+            }
+        } message: {
+            Text(
+                "Are you sure you want to delete this car? This action cannot be undone."
+            )
         }
     }
 }

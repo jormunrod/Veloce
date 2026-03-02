@@ -13,6 +13,8 @@ struct ContentView: View {
     @Environment(\.modelContext) private var context
 
     @State private var isShowingAddView = false
+    @State private var isShowingDeleteAlert = false
+    @State private var offsetsToDelete: IndexSet?
 
     var body: some View {
         NavigationStack {
@@ -90,13 +92,29 @@ struct ContentView: View {
                     )
                 }
             }
+            .alert("Delete Car", isPresented: $isShowingDeleteAlert) {
+                Button("Cancel", role: .cancel) {
+                    offsetsToDelete = nil
+                }
+                Button("Delete", role: .destructive) {
+                    if let offsets = offsetsToDelete {
+                        for index in offsets {
+                            context.delete(cars[index])
+                        }
+                    }
+                    offsetsToDelete = nil
+                }
+            } message: {
+                Text(
+                    "Are you sure you want to delete this car? This action cannot be undone."
+                )
+            }
         }
     }
 
     private func deleteCars(offsets: IndexSet) {
-        for index in offsets {
-            context.delete(cars[index])
-        }
+        offsetsToDelete = offsets
+        isShowingDeleteAlert = true
     }
 }
 
