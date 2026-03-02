@@ -12,15 +12,14 @@ struct AddCarView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
 
-    // Database query for existing series
     @Query(sort: \HotWheelSeries.name) private var allSeries: [HotWheelSeries]
 
-    // Required states
+    var carToEdit: HotWheel? = nil
+
     @State private var name: String = ""
     @State private var selectedSeries: HotWheelSeries?
     @State private var color: String = ""
 
-    // Optional states
     @State private var serialNumberCase: String = ""
     @State private var serialNumberCar: String = ""
     @State private var seriesNumber: String = ""
@@ -30,18 +29,15 @@ struct AddCarView: View {
     @State private var cost: String = ""
     @State private var notes: String = ""
 
-    // Boolean states
     @State private var hasCase: Bool = false
     @State private var isTreasureHunt: Bool = false
 
-    // Image states
     @State private var imageData: Data? = nil
     @State private var isShowingPhotoPicker = false
     @State private var isShowingPhotoOptions = false
     @State private var photoSource: UIImagePickerController.SourceType =
         .photoLibrary
 
-    // New series creation states
     @State private var isShowingNewSeriesAlert = false
     @State private var newSeriesName = ""
 
@@ -119,7 +115,8 @@ struct AddCarView: View {
                         .lineLimit(3...6)
                 }
             }
-            .navigationTitle("New Hot Wheel")
+            .navigationTitle(carToEdit == nil ? "New Hot Wheel" : "Edit Model")
+            .onAppear { loadData() }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
@@ -166,27 +163,65 @@ struct AddCarView: View {
         }
     }
 
+    private func loadData() {
+        guard let car = carToEdit else { return }
+        name = car.name
+        selectedSeries = car.series
+        color = car.color
+        serialNumberCase = car.serialNumberCase ?? ""
+        serialNumberCar = car.serialNumberCar ?? ""
+        seriesNumber = car.seriesNumber ?? ""
+        yearDesigned = car.yearDesigned
+        yearReleased = car.yearReleased
+        yearReceived = car.yearReceived
+        cost = car.cost.map { String(format: "%.2f", $0) } ?? ""
+        hasCase = car.hasCase
+        isTreasureHunt = car.isTreasureHunt
+        notes = car.notes ?? ""
+        imageData = car.imageData
+    }
+
     private func saveCar() {
         let parsedCost = Double(cost.replacingOccurrences(of: ",", with: "."))
 
-        let newCar = HotWheel(
-            name: name,
-            series: selectedSeries,
-            color: color,
-            serialNumberCase: serialNumberCase.isEmpty ? nil : serialNumberCase,
-            serialNumberCar: serialNumberCar.isEmpty ? nil : serialNumberCar,
-            seriesNumber: seriesNumber.isEmpty ? nil : seriesNumber,
-            yearDesigned: yearDesigned,
-            yearReleased: yearReleased,
-            yearReceived: yearReceived,
-            cost: parsedCost,
-            hasCase: hasCase,
-            isTreasureHunt: isTreasureHunt,
-            notes: notes.isEmpty ? nil : notes,
-            imageData: imageData
-        )
-
-        context.insert(newCar)
+        if let car = carToEdit {
+            car.name = name
+            car.series = selectedSeries
+            car.color = color
+            car.serialNumberCase =
+                serialNumberCase.isEmpty ? nil : serialNumberCase
+            car.serialNumberCar =
+                serialNumberCar.isEmpty ? nil : serialNumberCar
+            car.seriesNumber = seriesNumber.isEmpty ? nil : seriesNumber
+            car.yearDesigned = yearDesigned
+            car.yearReleased = yearReleased
+            car.yearReceived = yearReceived
+            car.cost = parsedCost
+            car.hasCase = hasCase
+            car.isTreasureHunt = isTreasureHunt
+            car.notes = notes.isEmpty ? nil : notes
+            car.imageData = imageData
+        } else {
+            let newCar = HotWheel(
+                name: name,
+                series: selectedSeries,
+                color: color,
+                serialNumberCase: serialNumberCase.isEmpty
+                    ? nil : serialNumberCase,
+                serialNumberCar: serialNumberCar.isEmpty
+                    ? nil : serialNumberCar,
+                seriesNumber: seriesNumber.isEmpty ? nil : seriesNumber,
+                yearDesigned: yearDesigned,
+                yearReleased: yearReleased,
+                yearReceived: yearReceived,
+                cost: parsedCost,
+                hasCase: hasCase,
+                isTreasureHunt: isTreasureHunt,
+                notes: notes.isEmpty ? nil : notes,
+                imageData: imageData
+            )
+            context.insert(newCar)
+        }
         dismiss()
     }
 }
