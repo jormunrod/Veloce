@@ -18,49 +18,56 @@ struct ContentView: View {
         NavigationStack {
             List {
                 ForEach(cars) { car in
-                    HStack(spacing: 16) {
+                    ForEach(cars) { car in
+                        NavigationLink(destination: CarDetailView(car: car)) {
+                            HStack(spacing: 16) {
 
-                        if let imageData = car.imageData,
-                            let uiImage = UIImage(data: imageData)
-                        {
-                            Image(uiImage: uiImage)
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 60, height: 60)
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
-                        } else {
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(Color.secondary.opacity(0.2))
-                                .frame(width: 60, height: 60)
-                                .overlay {
-                                    Image(systemName: "car.fill")
-                                        .foregroundColor(.secondary)
-                                }
-                        }
-
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(car.name)
-                                .font(.headline)
-
-                            HStack {
-                                Text(car.series?.name ?? "No Series")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-
-                                if let year = car.yearReleased {
-                                    Text("• \(String(year))")
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondary)
+                                if let imageData = car.imageData,
+                                    let uiImage = UIImage(data: imageData)
+                                {
+                                    Image(uiImage: uiImage)
+                                        .resizable()
+                                        .scaledToFill()
+                                        .frame(width: 60, height: 60)
+                                        .clipShape(
+                                            RoundedRectangle(cornerRadius: 8)
+                                        )
+                                } else {
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(Color.secondary.opacity(0.2))
+                                        .frame(width: 60, height: 60)
+                                        .overlay {
+                                            Image(systemName: "car.fill")
+                                                .foregroundColor(.secondary)
+                                        }
                                 }
 
-                                if car.isTreasureHunt {
-                                    Image(systemName: "flame.fill")
-                                        .foregroundColor(.orange)
-                                        .font(.caption)
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(car.name)
+                                        .font(.headline)
+
+                                    HStack {
+                                        Text(car.series?.name ?? "No Series")
+                                            .font(.subheadline)
+                                            .foregroundColor(.secondary)
+
+                                        if let year = car.yearReleased {
+                                            Text("• \(String(year))")
+                                                .font(.subheadline)
+                                                .foregroundColor(.secondary)
+                                        }
+
+                                        if car.isTreasureHunt {
+                                            Image(systemName: "flame.fill")
+                                                .foregroundColor(.orange)
+                                                .font(.caption)
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
+                    .onDelete(perform: deleteCars)
                 }
                 .onDelete(perform: deleteCars)
             }
