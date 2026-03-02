@@ -41,6 +41,10 @@ struct AddCarView: View {
     @State private var isShowingNewSeriesAlert = false
     @State private var newSeriesName = ""
 
+    private var maxYear: Int {
+        Calendar.current.component(.year, from: Date()) + 1
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -86,21 +90,24 @@ struct AddCarView: View {
                 Section("Dates") {
                     Picker("Designed Year", selection: $yearDesigned) {
                         Text("Unknown").tag(Int?.none)
-                        ForEach((1968...2027).reversed(), id: \.self) { year in
+                        ForEach((1968...maxYear).reversed(), id: \.self) {
+                            year in
                             Text(String(year)).tag(Int?.some(year))
                         }
                     }
 
                     Picker("Release Year", selection: $yearReleased) {
                         Text("Unknown").tag(Int?.none)
-                        ForEach((1968...2027).reversed(), id: \.self) { year in
+                        ForEach((1968...maxYear).reversed(), id: \.self) {
+                            year in
                             Text(String(year)).tag(Int?.some(year))
                         }
                     }
 
                     Picker("Received Year", selection: $yearReceived) {
                         Text("Unknown").tag(Int?.none)
-                        ForEach((2000...2030).reversed(), id: \.self) { year in
+                        ForEach((1968...maxYear).reversed(), id: \.self) {
+                            year in
                             Text(String(year)).tag(Int?.some(year))
                         }
                     }
