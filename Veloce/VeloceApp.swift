@@ -12,7 +12,7 @@ import SwiftData
 struct VeloceApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MainTabView()
         }
         .modelContainer(for: HotWheel.self)
     }
