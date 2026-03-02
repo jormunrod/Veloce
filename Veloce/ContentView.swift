@@ -16,13 +16,31 @@ struct ContentView: View {
     @State private var isShowingDeleteAlert = false
     @State private var offsetsToDelete: IndexSet?
 
+    @State private var searchText = ""
+    @State private var showOnlyTreasureHunts = false
+
+    var filteredCars: [HotWheel] {
+        cars.filter { car in
+            let matchesSearch =
+                searchText.isEmpty
+                || car.name.localizedCaseInsensitiveContains(searchText)
+                || (car.series?.name ?? "").localizedCaseInsensitiveContains(
+                    searchText
+                ) || car.color.localizedCaseInsensitiveContains(searchText)
+
+            let matchesTreasureHunt =
+                showOnlyTreasureHunts ? car.isTreasureHunt : true
+
+            return matchesSearch && matchesTreasureHunt
+        }
+    }
+
     var body: some View {
         NavigationStack {
             List {
-                ForEach(cars) { car in
+                ForEach(filteredCars) { car in
                     NavigationLink(destination: CarDetailView(car: car)) {
                         HStack(spacing: 16) {
-
                             if let imageData = car.imageData,
                                 let uiImage = UIImage(data: imageData)
                             {
@@ -71,7 +89,28 @@ struct ContentView: View {
                 .onDelete(perform: deleteCars)
             }
             .navigationTitle("My Collection")
+            .searchable(
+                text: $searchText,
+                prompt: "Search models, series or colors..."
+            )
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Menu {
+                        Toggle(isOn: $showOnlyTreasureHunts) {
+                            Label(
+                                "Treasure Hunts Only",
+                                systemImage: "flame.fill"
+                            )
+                        }
+                    } label: {
+                        Image(
+                            systemName: showOnlyTreasureHunts
+                                ? "line.3.horizontal.decrease.circle.fill"
+                                : "line.3.horizontal.decrease.circle"
+                        )
+                    }
+                }
+
                 ToolbarItem(placement: .primaryAction) {
                     Button {
                         isShowingAddView = true
@@ -90,6 +129,8 @@ struct ContentView: View {
                         systemImage: "car",
                         description: Text("Tap the + to add your first model.")
                     )
+                } else if filteredCars.isEmpty {
+                    ContentUnavailableView.search(text: searchText)
                 }
             }
             .alert("Delete Car", isPresented: $isShowingDeleteAlert) {
@@ -99,7 +140,8 @@ struct ContentView: View {
                 Button("Delete", role: .destructive) {
                     if let offsets = offsetsToDelete {
                         for index in offsets {
-                            context.delete(cars[index])
+                            let carToDelete = filteredCars[index]
+                            context.delete(carToDelete)
                         }
                     }
                     offsetsToDelete = nil
