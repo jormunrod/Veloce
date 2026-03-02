@@ -6,19 +6,59 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct ContentView: View {
+    @Query(sort: \HotWheel.name) private var cars: [HotWheel]
+    @Environment(\.modelContext) private var context
+    
+    @State private var isShowingAddView = false
+    
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        NavigationStack {
+            List {
+                ForEach(cars) { car in
+                    VStack(alignment: .leading) {
+                        Text(car.name)
+                            .font(.headline)
+                        Text("\(car.series) • \(String(car.year))")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                .onDelete(perform: deleteCars)
+            }
+            .navigationTitle("Mi Colección")
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        isShowingAddView = true
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                }
+            }
+            .sheet(isPresented: $isShowingAddView) {
+                AddCarView()
+            }
+            .overlay {
+                if cars.isEmpty {
+                    ContentUnavailableView("Colección vacía",
+                                           systemImage: "car",
+                                           description: Text("Toca el + para añadir tu primer modelo."))
+                }
+            }
         }
-        .padding()
+    }
+    
+    private func deleteCars(offsets: IndexSet) {
+        for index in offsets {
+            context.delete(cars[index])
+        }
     }
 }
 
 #Preview {
     ContentView()
+        .modelContainer(for: HotWheel.self, inMemory: true)
 }

@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 @main
 struct VeloceApp: App {
@@ -13,5 +14,6 @@ struct VeloceApp: App {
         WindowGroup {
             ContentView()
         }
+        .modelContainer(for: HotWheel.self)
     }
 }
