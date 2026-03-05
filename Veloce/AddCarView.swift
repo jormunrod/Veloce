@@ -4,6 +4,7 @@
 //
 //  Created by Jorge Muñoz Rodríguez on 2/3/26.
 //
+
 import SwiftData
 import SwiftUI
 
@@ -41,6 +42,13 @@ struct AddCarView: View {
         Calendar.current.component(.year, from: Date()) + 1
     }
 
+    private let predefinedColors: [(name: String, value: Color)] = [
+        ("Black", .black), ("White", .white), ("Silver", .gray),
+        ("Red", .red), ("Blue", .blue), ("Green", .green),
+        ("Yellow", .yellow), ("Orange", .orange), ("Purple", .purple),
+        ("Pink", .pink), ("Brown", .brown), ("Gold", .yellow.opacity(0.8)),
+    ]
+
     private var isCostValid: Bool {
         let trimmed = cost.trimmingCharacters(in: .whitespaces)
         if trimmed.isEmpty { return true }
@@ -50,18 +58,13 @@ struct AddCarView: View {
 
     private var isSeriesNumberValid: Bool {
         let trimmed = seriesNumber.trimmingCharacters(in: .whitespaces)
-        if trimmed.isEmpty { return true }  // Empty is allowed
+        if trimmed.isEmpty { return true }
 
         let firstNumberStr =
             trimmed.components(separatedBy: "/").first ?? trimmed
 
-        guard let enteredNumber = Int(firstNumberStr) else {
-            return false
-        }
-
-        guard enteredNumber > 0 else {
-            return false
-        }
+        guard let enteredNumber = Int(firstNumberStr) else { return false }
+        guard enteredNumber > 0 else { return false }
 
         if let total = selectedSeries?.totalCars {
             return enteredNumber <= total
@@ -113,6 +116,11 @@ struct AddCarView: View {
 
                     HStack {
                         TextField(seriesNumberPlaceholder, text: $seriesNumber)
+                            .onChange(of: seriesNumber) { _, newValue in
+                                seriesNumber = newValue.filter {
+                                    $0.isNumber || $0 == "/"
+                                }
+                            }
 
                         if let total = selectedSeries?.totalCars {
                             Text("Max: \(total)")
@@ -135,7 +143,43 @@ struct AddCarView: View {
                         }
                     }
 
-                    TextField("Color", text: $color)
+                    VStack(alignment: .leading, spacing: 12) {
+                        TextField("Color (e.g. Red or Zamac)", text: $color)
+
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 12) {
+                                ForEach(predefinedColors, id: \.name) {
+                                    preset in
+                                    let isSelected =
+                                        color.lowercased()
+                                        == preset.name.lowercased()
+
+                                    Circle()
+                                        .fill(preset.value)
+                                        .frame(width: 32, height: 32)
+                                        .overlay(
+                                            Circle()
+                                                .stroke(
+                                                    isSelected
+                                                        ? Color.accentColor
+                                                        : Color.secondary
+                                                            .opacity(0.3),
+                                                    lineWidth: isSelected
+                                                        ? 3 : 1
+                                                )
+                                        )
+                                        .onTapGesture {
+                                            UIImpactFeedbackGenerator(
+                                                style: .light
+                                            ).impactOccurred()
+                                            color = preset.name
+                                        }
+                                }
+                            }
+                            .padding(.vertical, 4)
+                            .padding(.horizontal, 2)
+                        }
+                    }
                 }
 
                 Section("Identifiers") {
@@ -173,12 +217,13 @@ struct AddCarView: View {
                     TextField("Cost (€)", text: $cost)
                         .keyboardType(.decimalPad)
                         .onChange(of: cost) { _, newValue in
-                            if newValue.contains(",") {
-                                cost = newValue.replacingOccurrences(
-                                    of: ",",
-                                    with: "."
-                                )
+                            let filtered = newValue.filter {
+                                $0.isNumber || $0 == "." || $0 == ","
                             }
+                            cost = filtered.replacingOccurrences(
+                                of: ",",
+                                with: "."
+                            )
                         }
 
                     if !isCostValid {
