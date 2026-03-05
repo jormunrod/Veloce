@@ -12,9 +12,10 @@ import UniformTypeIdentifiers
 struct DashboardView: View {
     @Query private var cars: [HotWheel]
     @Environment(\.modelContext) private var context
-    @State private var isExporting = false
+
     @State private var isImporting = false
-    @State private var backupDocument = BackupDocument()
+    @State private var showExportSuccess = false
+    @State private var exportMessage = ""
 
     private var totalCars: Int {
         cars.count
@@ -72,15 +73,13 @@ struct DashboardView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
-                        Button(
-                            "Export Data",
-                            systemImage: "square.and.arrow.up"
-                        ) {
-                            prepareExport()
+                        Button("Backup Now", systemImage: "arrow.down.doc.fill")
+                        {
+                            createAutomaticBackup()
                         }
                         Button(
-                            "Import Data",
-                            systemImage: "square.and.arrow.down"
+                            "Restore Backup",
+                            systemImage: "arrow.up.doc.fill"
                         ) {
                             isImporting = true
                         }
@@ -89,12 +88,6 @@ struct DashboardView: View {
                     }
                 }
             }
-            .fileExporter(
-                isPresented: $isExporting,
-                document: backupDocument,
-                contentType: .json,
-                defaultFilename: "VeloceBackup"
-            ) { _ in }
             .fileImporter(
                 isPresented: $isImporting,
                 allowedContentTypes: [.json]
@@ -105,6 +98,11 @@ struct DashboardView: View {
                 case .failure(let error):
                     print("Error importing: \(error.localizedDescription)")
                 }
+            }
+            .alert("Backup Successful", isPresented: $showExportSuccess) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(exportMessage)
             }
             .overlay {
                 if cars.isEmpty {
@@ -118,8 +116,12 @@ struct DashboardView: View {
         }
     }
 
-    // Funciones ahora dentro de DashboardView
-    private func prepareExport() {
+    private func createAutomaticBackup() {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd_HH-mm"
+        let dateString = formatter.string(from: Date())
+        let filename = "VeloceBackup_\(dateString).json"
+
         let dtos = cars.map { car in
             HotWheelDTO(
                 name: car.name,
@@ -138,8 +140,38 @@ struct DashboardView: View {
                 imageData: car.imageData
             )
         }
-        backupDocument = BackupDocument(dtos: dtos)
-        isExporting = true
+
+        do {
+            let data = try JSONEncoder().encode(dtos)
+
+            guard
+                let documentsDirectory = FileManager.default.urls(
+                    for: .documentDirectory,
+                    in: .userDomainMask
+                ).first
+            else { return }
+
+            let backupsDirectory = documentsDirectory.appendingPathComponent(
+                "Backups"
+            )
+
+            if !FileManager.default.fileExists(atPath: backupsDirectory.path) {
+                try FileManager.default.createDirectory(
+                    at: backupsDirectory,
+                    withIntermediateDirectories: true
+                )
+            }
+
+            let fileURL = backupsDirectory.appendingPathComponent(filename)
+            try data.write(to: fileURL, options: [.atomic, .completeFileProtection])
+             
+            exportMessage =
+                "Saved to On My iPhone ➔ Veloce ➔ Backups ➔ \(filename)"
+            showExportSuccess = true
+
+        } catch {
+            print("Failed to create backup: \(error.localizedDescription)")
+        }
     }
 
     private func importData(from url: URL) {

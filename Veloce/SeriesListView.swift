@@ -49,7 +49,7 @@ struct SeriesListView: View {
                 .onDelete(perform: deleteSeries)
             }
             .navigationTitle("Series")
-            .searchable(text: $searchText, prompt: "Search collections...")
+            .searchable(text: $searchText, prompt: "Search series...")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button {

@@ -10,9 +10,22 @@
 		CFDBF2182F55F3E300B411D4 /* Veloce.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Veloce.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		CF59679A2F5A10690021800A /* Exceptions for "Veloce" folder in "Veloce" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = CFDBF2172F55F3E300B411D4 /* Veloce */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		CFDBF21A2F55F3E300B411D4 /* Veloce */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				CF59679A2F5A10690021800A /* Exceptions for "Veloce" folder in "Veloce" target */,
+			);
 			path = Veloce;
 			sourceTree = "<group>";
 		};
@@ -256,6 +269,7 @@
 				DEVELOPMENT_TEAM = BJ46SLL25S;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Veloce/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Veloce;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Necesary to take HotWheels photos.";
@@ -291,6 +305,7 @@
 				DEVELOPMENT_TEAM = BJ46SLL25S;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Veloce/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Veloce;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Necesary to take HotWheels photos.";
