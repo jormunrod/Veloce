@@ -27,9 +27,7 @@ struct SeriesListView: View {
             List {
                 ForEach(filteredSeries) { series in
                     NavigationLink(
-                        destination: Text(
-                            "Details for \(series.name) coming soon!"
-                        )
+                        destination: SeriesDetailView(series: series)
                     ) {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(series.name)
