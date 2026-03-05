@@ -13,7 +13,12 @@ struct MainTabView: View {
         TabView {
             ContentView()
                 .tabItem {
-                    Label("Collection", systemImage: "list.dash")
+                    Label("Collection", systemImage: "car.fill")
+                }
+
+            SeriesListView()
+                .tabItem {
+                    Label("Series", systemImage: "square.stack.3d.up.fill")
                 }
 
             DashboardView()
@@ -34,8 +39,16 @@ struct MainTabView: View {
             )
             let context = container.mainContext
 
-            let experimotors = HotWheelSeries(name: "EXPERIMOTORS (2022)")
-            let jImports = HotWheelSeries(name: "HW J-IMPORTS (2021)")
+            let experimotors = HotWheelSeries(
+                name: "EXPERIMOTORS",
+                year: 2022,
+                totalCars: 5
+            )
+            let jImports = HotWheelSeries(
+                name: "HW J-IMPORTS",
+                year: 2021,
+                totalCars: 10
+            )
 
             context.insert(experimotors)
             context.insert(jImports)
@@ -43,31 +56,10 @@ struct MainTabView: View {
             let car1 = HotWheel(
                 name: "DRAGGIN' WAGON",
                 series: experimotors,
-                color: "BLUE",
-                seriesNumber: "1/5",
-                yearDesigned: 2022,
-                yearReleased: 2022,
-                yearReceived: 2023,
-                cost: 1.80,
-                hasCase: false
-            )
-
-            let car2 = HotWheel(
-                name: "SUBARU WRX STI",
-                series: jImports,
-                color: "WHITE",
-                serialNumberCase: "HKK62-M7C5",
-                serialNumberCar: "HCV32",
-                seriesNumber: "2/10",
-                yearDesigned: 2021,
-                yearReleased: 2021,
-                yearReceived: 2024,
-                cost: 2.50,
-                hasCase: false
+                color: "BLUE"
             )
 
             context.insert(car1)
-            context.insert(car2)
 
             return container
         } catch {

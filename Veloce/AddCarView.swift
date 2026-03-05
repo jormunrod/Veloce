@@ -4,7 +4,6 @@
 //
 //  Created by Jorge Muñoz Rodríguez on 2/3/26.
 //
-
 import SwiftData
 import SwiftUI
 
@@ -38,11 +37,49 @@ struct AddCarView: View {
     @State private var photoSource: UIImagePickerController.SourceType =
         .photoLibrary
 
-    @State private var isShowingNewSeriesAlert = false
-    @State private var newSeriesName = ""
-
     private var maxYear: Int {
         Calendar.current.component(.year, from: Date()) + 1
+    }
+
+    private var isCostValid: Bool {
+        let trimmed = cost.trimmingCharacters(in: .whitespaces)
+        if trimmed.isEmpty { return true }
+        let normalized = trimmed.replacingOccurrences(of: ",", with: ".")
+        return Double(normalized) != nil
+    }
+
+    private var isSeriesNumberValid: Bool {
+        let trimmed = seriesNumber.trimmingCharacters(in: .whitespaces)
+        if trimmed.isEmpty { return true }  // Empty is allowed
+
+        let firstNumberStr =
+            trimmed.components(separatedBy: "/").first ?? trimmed
+
+        guard let enteredNumber = Int(firstNumberStr) else {
+            return false
+        }
+
+        guard enteredNumber > 0 else {
+            return false
+        }
+
+        if let total = selectedSeries?.totalCars {
+            return enteredNumber <= total
+        }
+
+        return true
+    }
+
+    private var isFormValid: Bool {
+        !name.trimmingCharacters(in: .whitespaces).isEmpty && isCostValid
+            && isSeriesNumberValid
+    }
+
+    private var seriesNumberPlaceholder: String {
+        if selectedSeries?.totalCars != nil {
+            return "Car Number (e.g. 1)"
+        }
+        return "Series Number (e.g. 1/5)"
     }
 
     var body: some View {
@@ -74,11 +111,30 @@ struct AddCarView: View {
                         }
                     }
 
-                    Button("Create New Series...") {
-                        isShowingNewSeriesAlert = true
+                    HStack {
+                        TextField(seriesNumberPlaceholder, text: $seriesNumber)
+
+                        if let total = selectedSeries?.totalCars {
+                            Text("Max: \(total)")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
                     }
 
-                    TextField("Series Number (e.g. 1/5)", text: $seriesNumber)
+                    if !isSeriesNumberValid {
+                        if let total = selectedSeries?.totalCars {
+                            Text(
+                                "Must be a valid number between 1 and \(total)."
+                            )
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                        } else {
+                            Text("Must be a positive number.")
+                                .font(.caption)
+                                .foregroundStyle(.red)
+                        }
+                    }
+
                     TextField("Color", text: $color)
                 }
 
@@ -116,6 +172,21 @@ struct AddCarView: View {
                 Section("Acquisition & Status") {
                     TextField("Cost (€)", text: $cost)
                         .keyboardType(.decimalPad)
+                        .onChange(of: cost) { _, newValue in
+                            if newValue.contains(",") {
+                                cost = newValue.replacingOccurrences(
+                                    of: ",",
+                                    with: "."
+                                )
+                            }
+                        }
+
+                    if !isCostValid {
+                        Text("Please enter a valid amount (e.g. 2.50)")
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    }
+
                     Toggle("Has Case (Protector)", isOn: $hasCase)
                     Toggle("Is Treasure Hunt", isOn: $isTreasureHunt)
                     TextField("Comment", text: $notes, axis: .vertical)
@@ -130,7 +201,7 @@ struct AddCarView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") { saveCar() }
-                        .disabled(name.isEmpty || selectedSeries == nil)
+                        .disabled(!isFormValid)
                 }
             }
             .confirmationDialog(
@@ -155,18 +226,6 @@ struct AddCarView: View {
                 )
                 .ignoresSafeArea()
             }
-            .alert("New Series", isPresented: $isShowingNewSeriesAlert) {
-                TextField("Name (e.g. HW J-Imports)", text: $newSeriesName)
-                Button("Cancel", role: .cancel) { newSeriesName = "" }
-                Button("Create") {
-                    let newSeries = HotWheelSeries(name: newSeriesName)
-                    context.insert(newSeries)
-                    selectedSeries = newSeries
-                    newSeriesName = ""
-                }
-            } message: {
-                Text("Enter the name for the new series.")
-            }
         }
     }
 
@@ -188,8 +247,19 @@ struct AddCarView: View {
         imageData = car.imageData
     }
 
+    private func getFormattedSeriesNumber() -> String? {
+        let trimmed = seriesNumber.trimmingCharacters(in: .whitespaces)
+        if trimmed.isEmpty { return nil }
+
+        if let total = selectedSeries?.totalCars, !trimmed.contains("/") {
+            return "\(trimmed)/\(total)"
+        }
+        return trimmed
+    }
+
     private func saveCar() {
         let parsedCost = Double(cost.replacingOccurrences(of: ",", with: "."))
+        let formattedSeriesNumber = getFormattedSeriesNumber()
 
         if let car = carToEdit {
             car.name = name
@@ -199,7 +269,7 @@ struct AddCarView: View {
                 serialNumberCase.isEmpty ? nil : serialNumberCase
             car.serialNumberCar =
                 serialNumberCar.isEmpty ? nil : serialNumberCar
-            car.seriesNumber = seriesNumber.isEmpty ? nil : seriesNumber
+            car.seriesNumber = formattedSeriesNumber
             car.yearDesigned = yearDesigned
             car.yearReleased = yearReleased
             car.yearReceived = yearReceived
@@ -217,7 +287,7 @@ struct AddCarView: View {
                     ? nil : serialNumberCase,
                 serialNumberCar: serialNumberCar.isEmpty
                     ? nil : serialNumberCar,
-                seriesNumber: seriesNumber.isEmpty ? nil : seriesNumber,
+                seriesNumber: formattedSeriesNumber,
                 yearDesigned: yearDesigned,
                 yearReleased: yearReleased,
                 yearReceived: yearReceived,
